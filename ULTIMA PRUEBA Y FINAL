@@ -1,4 +1,4 @@
-<!doctype html>
+<doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
@@ -79,7 +79,6 @@
         opacity: 1;
         filter: drop-shadow(0 0 5px rgba(251,191,36,0.5));
     }
-
 
     .sidebar .footer{margin-top:auto;font-size:11px;color:var(--muted);padding-top:16px;border-top:1px solid rgba(255,255,255,0.05);text-align:center}
 
@@ -376,7 +375,6 @@
       form{grid-template-columns:1fr}
       .table-scroll-container { max-height: 300px; } 
     }
-
     @media print{body{background:white;color:black}.sidebar,.top .controls{display:none}}
   </style>
 </head>
