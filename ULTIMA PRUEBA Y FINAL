@@ -1,0 +1,1279 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Control de Carga – Sistema Profesional</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <style>
+    :root{
+      --bg:#0a0e1a; --panel:#0f1621; --card:#141b2e; --muted:#94a3b8;
+      --gold:#fbbf24; --white:#f8fafc; --accent:#3b82f6; --sidebar-w:260px;
+      --success:#10b981; --danger:#ef4444;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Inter',Segoe UI,Arial,sans-serif;background:linear-gradient(135deg,var(--bg) 0%,#020408 100%);color:var(--white);overflow:hidden}
+    
+    .app{display:flex;height:100vh;position:relative}
+
+    /* SIDEBAR */
+    .sidebar{width:var(--sidebar-w);background:linear-gradient(180deg,rgba(15,22,33,0.95),rgba(10,14,26,0.98));backdrop-filter:blur(20px);padding:20px;display:flex;flex-direction:column;border-right:1px solid rgba(251,191,36,0.1);box-shadow:4px 0 24px rgba(0,0,0,0.5);transition:all .3s cubic-bezier(0.4,0,0.2,1);z-index:100}
+    .sidebar.hidden{transform:translateX(-100%);opacity:0}
+    
+    .brand{display:flex;align-items:center;gap:12px;padding:12px;background:linear-gradient(135deg,rgba(251,191,36,0.1),rgba(59,130,246,0.05));border-radius:12px;border:1px solid rgba(251,191,36,0.2);margin-bottom:20px;}
+    .brand svg{width:36px;height:36px;fill:var(--gold);filter:drop-shadow(0 2px 8px rgba(251,191,36,0.4))}
+    .brand .title{font-weight:800;color:var(--gold);font-size:17px;letter-spacing:-0.3px}
+    .brand .sub{font-size:11px;color:var(--muted);margin-top:2px}
+
+    .months{margin-top:0px;display:flex;flex-direction:column;gap:6px;overflow-y:auto;flex:1;padding-right:4px}
+    .months::-webkit-scrollbar{width:4px}
+    .months::-webkit-scrollbar-thumb{background:rgba(251,191,36,0.3);border-radius:4px}
+    
+    .month-btn{
+        background:linear-gradient(135deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01));
+        border:1px solid rgba(255,255,255,0.08);
+        padding:12px 14px;
+        border-radius:10px;
+        color:var(--white);
+        text-align:left;
+        cursor:pointer;
+        display:flex;
+        gap:10px;
+        align-items:center;
+        transition:all .2s ease;
+        position:relative;
+        overflow:hidden;
+        font-weight: 500;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .month-btn:hover{
+        background:linear-gradient(135deg,rgba(251,191,36,0.08),rgba(251,191,36,0.02));
+        border-color:rgba(251,191,36,0.3);
+        transform:translateX(4px);
+        box-shadow: 0 4px 12px rgba(251,191,36,0.2);
+    }
+    .month-btn.active{
+        background:linear-gradient(135deg,rgba(251,191,36,0.18),rgba(59,130,246,0.08));
+        border-left:3px solid var(--gold);
+        color:var(--gold);
+        font-weight:700;
+        box-shadow:0 4px 12px rgba(251,191,36,0.2);
+    }
+    .month-btn.active::before{
+        content:'';
+        position:absolute;
+        left:0;top:0;
+        width:100%;
+        height:100%;
+        background:linear-gradient(90deg,rgba(251,191,36,0.1),transparent);
+        pointer-events:none;
+    }
+    .month-btn svg {
+        fill: currentColor; /* Asegura que el SVG herede el color del texto */
+        width: 18px;
+        height: 18px;
+        opacity: 0.8;
+    }
+    .month-btn.active svg {
+        opacity: 1;
+        filter: drop-shadow(0 0 5px rgba(251,191,36,0.5));
+    }
+
+
+    .sidebar .footer{margin-top:auto;font-size:11px;color:var(--muted);padding-top:16px;border-top:1px solid rgba(255,255,255,0.05);text-align:center}
+
+    /* MAIN */
+    .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+    .top{display:flex;justify-content:space-between;align-items:center;padding:16px 24px;background:rgba(15,22,33,0.8);backdrop-filter:blur(20px);border-bottom:1px solid rgba(251,191,36,0.1);box-shadow:0 4px 16px rgba(0,0,0,0.3)}
+    .top-left{display:flex;align-items:center;gap:16px}
+    .hamburger{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,rgba(251,191,36,0.1),rgba(59,130,246,0.05));display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid rgba(251,191,36,0.2);transition:all .2s;position:relative}
+    .hamburger:hover{background:linear-gradient(135deg,rgba(251,191,36,0.2),rgba(59,130,246,0.1));transform:scale(1.05);box-shadow:0 4px 12px rgba(251,191,36,0.3)}
+    .hamburger:active{transform:scale(0.95)}
+    .hamburger svg{width:22px;height:22px;fill:var(--gold)}
+    .top h1{margin:0;color:var(--gold);font-size:20px;font-weight:700;letter-spacing:-0.5px}
+    
+    .controls{display:flex;gap:10px;align-items:center}
+    .btn{background:linear-gradient(135deg,var(--gold),#f59e0b);color:#1e293b;padding:10px 18px;border-radius:10px;border:0;cursor:pointer;display:flex;align-items:center;gap:8px;font-weight:600;transition:all .2s;box-shadow:0 4px 12px rgba(251,191,36,0.3)}
+    .btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(251,191,36,0.4)}
+    .btn:active{transform:translateY(0)}
+    .btn svg{fill:currentColor}
+    .ghost{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--white);padding:10px 16px;border-radius:10px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:all .2s}
+    .ghost:hover{background:rgba(255,255,255,0.1);border-color:rgba(251,191,36,0.3)}
+
+    .content{display:grid;grid-template-columns:1fr 420px;gap:20px;padding:24px;align-items:start;overflow-y:auto;height:100%}
+    @media(max-width:1100px){.content{grid-template-columns:1fr}}
+
+    /* SHEET */
+    .sheet{background:linear-gradient(135deg,rgba(20,27,46,0.9),rgba(15,22,33,0.95));backdrop-filter:blur(10px);padding:20px;border-radius:16px;border:1px solid rgba(251,191,36,0.15);box-shadow:0 8px 32px rgba(0,0,0,0.4)}
+    
+    form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:20px}
+    label{font-size:12px;color:var(--muted);margin-bottom:6px;display:block;font-weight:500}
+    input,select{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:10px 12px;border-radius:8px;color:var(--white);transition:all .2s;width:100%;font-size:14px}
+    input:focus,select:focus{outline:none;border-color:var(--gold);background:rgba(255,255,255,0.06);box-shadow:0 0 0 3px rgba(251,191,36,0.1)}
+    input::placeholder{color:rgba(148,163,184,0.5)}
+    
+    .form-actions{grid-column:1/-1;display:flex;gap:10px;justify-content:flex-end}
+    button[type="submit"]{background:linear-gradient(135deg,var(--gold),#f59e0b);color:#1e293b;padding:12px 24px;border-radius:8px;border:0;cursor:pointer;font-weight:600;transition:all .2s;box-shadow:0 4px 12px rgba(251,191,36,0.3)}
+    button[type="submit"]:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(251,191,36,0.4)}
+
+    .search-box{grid-column:1/-1;display:flex;gap:10px;margin-top:8px;padding:16px;background:rgba(255,255,255,0.02);border-radius:10px;border:1px solid rgba(255,255,255,0.05)}
+    .search-box input{flex:1}
+
+    table{width:100%;border-collapse:collapse;margin-top:16px;font-size:13px;background:rgba(255,255,255,0.02);border-radius:10px;overflow:hidden}
+    thead th{background:linear-gradient(135deg,rgba(251,191,36,0.15),rgba(59,130,246,0.1));color:var(--gold);padding:12px;border-bottom:2px solid rgba(251,191,36,0.3);text-align:center;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:0.5px}
+    tbody td{padding:12px;border-bottom:1px solid rgba(255,255,255,0.05);text-align:center;color:var(--white);transition:background .2s}
+    tbody tr:hover{background:rgba(251,191,36,0.05)}
+    tbody td.left{text-align:left}
+    .actions{display:flex;gap:6px;justify-content:center}
+    .actions button{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);padding:6px 12px;border-radius:6px;color:var(--white);cursor:pointer;font-size:11px;transition:all .2s}
+    .actions button:hover{background:rgba(251,191,36,0.1);border-color:var(--gold);color:var(--gold)}
+
+    /* SUMMARY CARDS */
+    .summary-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:20px 0}
+    .card-s{background:linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02));padding:16px;border-radius:12px;border:1px solid rgba(251,191,36,0.15);box-shadow:0 4px 16px rgba(0,0,0,0.3);transition:all .3s}
+    .card-s:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(251,191,36,0.2);border-color:rgba(251,191,36,0.3)}
+    .card-s .label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px}
+    .card-s .value{font-size:24px;color:var(--gold);font-weight:800;text-shadow:0 2px 8px rgba(251,191,36,0.3)}
+    
+    .card-s-full {
+        background: linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02));
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid rgba(251,191,36,0.15);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+
+    .chart-wrap{margin-top:20px;background:linear-gradient(135deg,rgba(20,27,46,0.6),rgba(15,22,33,0.8));padding:16px;border-radius:12px;border:1px solid rgba(251,191,36,0.1);min-height:200px}
+
+    /* ANNUAL */
+    .annual{padding:24px;height:100%;overflow-y:auto}
+    .annual .card{background:linear-gradient(135deg,rgba(20,27,46,0.9),rgba(15,22,33,0.95));backdrop-filter:blur(10px);padding:24px;border-radius:16px;border:1px solid rgba(251,191,36,0.15);box-shadow:0 8px 32px rgba(0,0,0,0.4)}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,rgba(251,191,36,0.95),rgba(245,158,11,0.95));color:#1e293b;padding:14px 20px;border-radius:10px;box-shadow:0 8px 24px rgba(251,191,36,0.4);display:flex;align-items:center;gap:10px;font-weight:600;z-index:1000;animation:slideIn .3s ease;font-size:14px}
+    .toast.success{background:linear-gradient(135deg,rgba(16,185,129,0.95),rgba(5,150,105,0.95))}
+    .toast.error{background:linear-gradient(135deg,rgba(239,68,68,0.95),rgba(220,38,38,0.95))}
+    @keyframes slideIn{from{transform:translateX(400px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+    /* MUESTRAS SCROLL Y VECTOR */
+    .table-scroll-container {
+        max-height: 400px; 
+        overflow-y: auto;
+        margin-top: 20px;
+        border: 1px solid rgba(251,191,36,0.1); 
+        border-radius: 10px; 
+        background: rgba(255,255,255,0.02);
+    }
+    .table-scroll-container table {
+        margin-top: 0; 
+    }
+    .table-scroll-container thead th {
+        position: sticky; 
+        top: 0;
+        z-index: 1; 
+    }
+    
+    #pageMuestras .annual {
+        display: grid;
+        grid-template-columns: 1fr 240px; 
+        gap: 24px; 
+        height: 100%;
+        align-items: start; 
+    }
+    .muestras-decor-wrap {
+        background: linear-gradient(135deg, rgba(251,191,36,0.05), rgba(59,130,246,0.02));
+        border: 1px solid rgba(251,191,36,0.1);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 30px 20px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+        height: fit-content; 
+        position: sticky; 
+        top: 24px;
+        flex-direction: column; 
+        text-align: center;
+    }
+    .muestras-decor-wrap svg {
+        width: 100%;
+        max-width: 180px;
+        height: auto;
+        fill: var(--gold);
+        opacity: 0.7; 
+        filter: drop-shadow(0 0 10px rgba(251,191,36,0.4));
+    }
+    .muestras-decor-wrap p {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 15px;
+    }
+
+    /* DECORADO MENSUAL (NUEVO) */
+    .right-column-decor {
+        display: flex;
+        flex-direction: column;
+        gap: 20px; 
+    }
+    .monthly-decor-wrap {
+        background: linear-gradient(135deg, rgba(20,27,46,0.9), rgba(15,22,33,0.95));
+        padding: 30px 20px;
+        border-radius: 16px;
+        border: 1px solid rgba(59,130,246,0.15); 
+        box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        flex: 1; 
+    }
+    .monthly-decor-wrap svg {
+        width: 100%;
+        max-width: 250px;
+        height: auto;
+        opacity: 0.8; 
+        filter: drop-shadow(0 0 10px rgba(251,191,36,0.3));
+    }
+    
+    /* CALCULADORA MODAL */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    .modal-overlay.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+    .calculator-modal {
+      background: var(--card);
+      border: 1px solid rgba(251, 191, 36, 0.2);
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      width: 90%;
+      max-width: 350px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      animation: popIn 0.3s ease-out;
+    }
+    @keyframes popIn {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .calculator-modal h3 {
+      color: var(--gold);
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    .calculator-modal input[type="text"] {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      padding: 12px;
+      border-radius: 8px;
+      color: var(--white);
+      font-size: 1.5em;
+      text-align: right;
+      margin-bottom: 15px;
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
+    }
+    .calc-buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .calc-buttons button {
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      border-radius: 8px;
+      padding: 15px;
+      color: var(--white);
+      font-size: 1.2em;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.1s ease;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    }
+    .calc-buttons button:hover {
+      background: rgba(251, 191, 36, 0.2);
+      transform: translateY(-1px);
+    }
+    .calc-buttons button:active {
+      transform: translateY(0);
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+    .calc-buttons .operator {
+      background: var(--accent);
+      color: var(--white);
+    }
+    .calc-buttons .operator:hover {
+      background: #4a90f2;
+    }
+    .calc-buttons .equals {
+      background: var(--gold);
+      color: var(--card);
+      grid-column: span 2;
+    }
+    .calc-buttons .equals:hover {
+      background: #ffcc50;
+    }
+    .calc-buttons .clear {
+      background: var(--danger);
+      color: var(--white);
+    }
+    .calc-buttons .clear:hover {
+      background: #ff6060;
+    }
+    .calc-close-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 1em;
+      align-self: flex-end;
+      cursor: pointer;
+      margin-top: 10px;
+      padding: 5px 10px;
+      border-radius: 5px;
+      transition: color 0.2s;
+    }
+    .calc-close-btn:hover {
+      color: var(--gold);
+    }
+
+    /* RESPONSIVE */
+    @media(max-width:1200px){ 
+        #pageMuestras .annual {
+            grid-template-columns: 1fr; 
+        }
+        .muestras-decor-wrap {
+            display: none; 
+        }
+    }
+    @media(max-width:1100px){
+        .content{grid-template-columns:1fr}
+        .right-column-decor {
+            display: none;
+        }
+    }
+    @media(max-width:768px){
+      .sidebar{width:100%;position:absolute;height:100%;z-index:200}
+      .top h1{font-size:16px}
+      .controls{gap:6px}
+      .btn,.ghost{padding:8px 12px;font-size:13px}
+      .content{grid-template-columns:1fr;padding:16px}
+      form{grid-template-columns:1fr}
+      .table-scroll-container { max-height: 300px; } 
+    }
+
+    @media print{body{background:white;color:black}.sidebar,.top .controls{display:none}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside id="sidebar" class="sidebar">
+      <div class="brand">
+        <svg viewBox="0 0 24 24"><path d="M12 2L2 7h20L12 2zm0 7l8 5v6H4v-6l8-5z"/></svg>
+        <div>
+          <div class="title">CONTROL DE CARGA</div>
+          <div class="sub">Sistema Profesional · v7.0</div>
+        </div>
+      </div>
+
+      <div class="months" id="sidebarMonths"></div>
+      
+      <button id="btnControlMuestras" class="month-btn" style="margin-top:12px">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+        <span style="flex:1">Control de Muestras</span>
+      </button>
+
+      <button id="btnResumenAnual" class="month-btn">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2V13h2v4z"/></svg>
+        <span style="flex:1">Resumen Anual</span>
+      </button>
+
+      <div class="footer">💾 Auto-guardado activo</div>
+    </aside>
+
+    <main class="main">
+      <div class="top">
+        <div class="top-left">
+          <div id="hamburger" class="hamburger" title="Menú">
+            <svg viewBox="0 0 24 24"><path d="M3 6h18v2H3zM3 11h18v2H3zM3 16h18v2H3z"/></svg>
+          </div>
+          <h1>⚡ Sistema de Control</h1>
+        </div>
+        <div class="controls">
+          <button id="btnExportAll" class="btn" title="Exportar todo">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M5 20h14v-2H5m14-9h-4V3H9v6H5l7 7 7-7z"/></svg>
+            <span>Exportar</span>
+          </button>
+          <button id="btnImportXLSX" class="ghost" title="Importar datos">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M9 16V10H5l7-7 7 7h-4v6M5 20v-2h14v2z"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div id="pages" style="flex:1;overflow:hidden">
+        <div id="pageMonth" style="height:100%">
+          <div class="content">
+            <section class="sheet">
+              <form id="entryForm">
+                <div>
+                  <label>📅 Fecha</label>
+                  <input id="fecha" type="date" required>
+                </div>
+                <div>
+                  <label>🏗️ Material</label>
+                  <select id="material" required>
+                    <option>BAJO TENOR</option>
+                    <option>MEDIO TENOR</option>
+                    <option>SELECTIVO</option>
+                  </select>
+                </div>
+                <div>
+                  <label>🚚 Volquetadas</label>
+                  <input id="volquetadas" type="number" min="0" placeholder="0">
+                </div>
+                <div>
+                  <label>⚖️ Peso (Ton)</label>
+                  <input id="peso" type="number" min="0" step="0.01" placeholder="0.00" required>
+                </div>
+                <div>
+                  <label>📍 Destino / Cliente</label>
+                  <input id="destino" type="text" placeholder="Ingrese destino">
+                </div>
+                <div class="form-actions">
+                  <button type="submit" id="btnSave">💾 Guardar</button>
+                </div>
+
+                <div class="search-box">
+                  <input id="search" placeholder="🔍 Buscar por fecha, material, destino..." />
+                  <button id="btnClearSearch" class="ghost">Limpiar</button>
+                </div>
+              </form>
+
+              <div style="overflow:auto">
+                <table id="table">
+                  <thead>
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Material</th>
+                      <th>Volquetadas</th>
+                      <th>Peso (Ton)</th>
+                      <th>Destino</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+
+              <div class="summary-row" id="summaryRow"></div>
+
+              <div class="chart-wrap">
+                <canvas id="monthChart" height="200"></canvas>
+              </div>
+            </section>
+
+            <div class="right-column-decor">
+                <div class="card-s-full">
+                    <h4 style="margin-bottom:15px; color:var(--accent)">💡 Herramientas Rápidas</h4>
+                    <button onclick="window.print()" class="ghost" style="width:100%; justify-content:center; margin-bottom:10px;">🖨️ Imprimir Vista Mensual</button>
+                    <button id="btnShowCalculator" class="ghost" style="width:100%; justify-content:center;">🧮 Calculadora Rápida</button>
+                </div>
+
+                <div class="monthly-decor-wrap">
+                    <svg viewBox="0 0 100 100" style="max-width:250px">
+                        <path d="M50 0 L100 50 L50 100 L0 50 Z" stroke="none" fill="rgba(251,191,36,0.1)"/>
+                        <path d="M50 10 L90 50 L50 90 L10 50 Z" stroke="var(--gold)" fill="none" stroke-width="2"/>
+                        <path d="M50 20 L80 50 L50 80 L20 50 Z" stroke="var(--accent)" fill="none" stroke-width="1.5"/>
+                        <path d="M48 40 L52 40 L52 70 L48 70 Z M50 70 L60 80 L40 80 Z" fill="var(--gold)"/>
+                        <circle cx="50" cy="50" r="5" fill="var(--white)"/>
+                    </svg>
+                    <h4 style="color:var(--gold); margin-top:20px;">Control de Producción</h4>
+                    <p style="color:var(--muted); font-size:13px;">Minería 4.0: Precisión en el registro de carga.</p>
+                </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="pageMuestras" style="display:none;height:100%">
+          <div class="annual">
+            <div class="card">
+              <h3 style="margin:0 0 12px 0;color:var(--gold);font-size:22px">🔬 Control de Muestras</h3>
+              <div style="color:var(--muted);margin-bottom:20px">Registro y seguimiento de muestras extraídas.</div>
+              
+              <form id="muestrasForm" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
+                <div>
+                  <label>📅 Fecha</label>
+                  <input id="muestra_fecha" type="date" required>
+                </div>
+                <div>
+                  <label>🔢 Cantidad</label>
+                  <input id="muestra_cantidad" type="number" min="1" placeholder="Ej: 5" required>
+                </div>
+                <div>
+                  <label>⛰️ Lugar de Extracción</label>
+                  <input id="muestra_lugar" type="text" placeholder="Ej: Bloque 3, Nivel 12">
+                </div>
+                <div>
+                  <label>🧪 Tenor Obtenido</label> 
+                  <input id="muestra_tenor" type="text" placeholder="Ej: 1.25 % o N/A" required>
+                </div>
+                
+                <div style="grid-column:1/-1;">
+                  <label>📝 Observaciones (Opcional)</label>
+                  <input id="muestra_observaciones" type="text" placeholder="Alguna nota sobre el estado o análisis de la muestra.">
+                </div>
+                
+                <div class="form-actions" style="grid-column:1/-1;">
+                  <button type="submit" id="btnSaveMuestra">💾 Guardar Muestra</button>
+                </div>
+                
+                <div class="search-box">
+                  <input id="searchMuestras" placeholder="🔍 Buscar por fecha, lugar..." />
+                  <button id="btnClearSearchMuestras" class="ghost">Limpiar</button>
+                </div>
+              </form>
+
+              <div class="table-scroll-container">
+                <table id="muestrasTable">
+                  <thead>
+                    <tr>
+                      <th style="width:100px">Fecha</th>
+                      <th>Cantidad</th>
+                      <th>Lugar de Extracción</th>
+                      <th style="width:120px">Tenor</th>
+                      <th style="min-width:200px">Observaciones</th>
+                      <th style="width:150px">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+            
+            <div class="muestras-decor-wrap">
+                <svg viewBox="0 0 100 100" style="max-width:180px">
+                  <path d="M50 0 L50 10 L60 10 L60 20 L50 20 L50 30 L60 30 L60 40 L50 40 L50 50 L60 50 L60 60 L50 60 L50 70 L60 70 L60 80 L50 80 L50 90 L60 90 L60 100 L40 100 L40 90 L30 90 L30 80 L40 80 L40 70 L30 70 L30 60 L40 60 L40 50 L30 50 L30 40 L40 40 L40 30 L30 30 L30 20 L40 20 L40 10 L30 10 L30 0 L50 0 M70 0 L70 10 L80 10 L80 20 L70 20 L70 30 L80 30 L80 40 L70 40 L70 50 L80 50 L80 60 L70 60 L70 70 L80 70 L80 80 L70 80 L70 90 L80 90 L80 100 L90 100 L90 90 L100 90 L100 80 L90 80 L90 70 L100 70 L100 60 L90 60 L90 50 L100 50 L100 40 L90 40 L90 30 L100 30 L100 20 L90 20 L90 10 L100 10 L100 0 L70 0 M10 0 L10 10 L20 10 L20 20 L10 20 L10 30 L20 30 L20 40 L10 40 L10 50 L20 50 L20 60 L10 60 L10 70 L20 70 L20 80 L10 80 L10 90 L20 90 L20 100 L0 100 L0 90 L10 90 L10 80 L0 80 L0 70 L10 70 L10 60 L0 60 L0 50 L10 50 L10 40 L0 40 L0 30 L10 30 L10 20 L0 20 L0 10 L10 10 L10 0 L0 0" fill="#fbbf24"/>
+                  <text x="50" y="50" font-family="Arial" font-size="10" fill="var(--card)" text-anchor="middle" dominant-baseline="middle" font-weight="bold">QC</text>
+                </svg>
+                <p>Monitoreo y Calidad de Material</p>
+            </div>
+
+          </div>
+        </div>
+        <div id="pageAnnual" style="display:none;height:100%">
+          <div class="annual">
+            <div class="card">
+              <h3 style="margin:0 0 12px 0;color:var(--gold);font-size:22px">📊 Resumen Anual Completo</h3>
+              <div style="color:var(--muted);margin-bottom:20px">Total de toneladas procesadas por mes</div>
+              <div style="margin-top:16px"><canvas id="annualBar" height="280"></canvas></div>
+              <div style="margin-top:20px;padding:16px;background:rgba(251,191,36,0.1);border-radius:10px;border:1px solid rgba(251,191,36,0.2)">
+                <div id="totalYearText" style="color:var(--gold);font-weight:700;font-size:18px">Total anual: 0 Ton</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <input id="fileXLSX" type="file" accept=".xlsx" style="display:none">
+
+  <div id="calculatorModal" class="modal-overlay">
+    <div class="calculator-modal">
+      <h3>Calculadora Rápida</h3>
+      <input type="text" id="calcDisplay" value="0" readonly>
+      <div class="calc-buttons">
+        <button class="clear" onclick="clearCalc()">C</button>
+        <button class="operator" onclick="appendCalcOperator('/')">÷</button>
+        <button class="operator" onclick="appendCalcOperator('*')">×</button>
+        <button onclick="appendCalcNumber('7')">7</button>
+        <button onclick="appendCalcNumber('8')">8</button>
+        <button onclick="appendCalcNumber('9')">9</button>
+        <button class="operator" onclick="appendCalcOperator('-')">-</button>
+        <button onclick="appendCalcNumber('4')">4</button>
+        <button onclick="appendCalcNumber('5')">5</button>
+        <button onclick="appendCalcNumber('6')">6</button>
+        <button class="operator" onclick="appendCalcOperator('+')">+</button>
+        <button onclick="appendCalcNumber('1')">1</button>
+        <button onclick="appendCalcNumber('2')">2</button>
+        <button onclick="appendCalcNumber('3')">3</button>
+        <button class="equals" onclick="calculateResult()">=</button>
+        <button onclick="appendCalcNumber('0')">0</button>
+        <button onclick="appendCalcNumber('.')">.</button>
+      </div>
+      <button class="calc-close-btn" onclick="hideCalculator()">Cerrar</button>
+    </div>
+  </div>
+
+
+  <script>
+    const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const STORAGE_KEY = 'control_carga_v7_pro';
+    const STORAGE_KEY_SAMPLES = 'control_carga_muestras_v1'; 
+
+    let data = JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
+    if(!data || !Array.isArray(data) || data.length!==12) data = Array.from({length:12},()=>[]);
+    let muestrasData = JSON.parse(localStorage.getItem(STORAGE_KEY_SAMPLES)||'null') || [];
+    
+    let activeMonth = new Date().getMonth();
+
+    const sidebar = document.getElementById('sidebar');
+    const sidebarMonths = document.getElementById('sidebarMonths');
+    const tbody = document.querySelector('#table tbody');
+    const tbodyMuestras = document.querySelector('#muestrasTable tbody');
+    const searchEl = document.getElementById('search');
+    const searchMuestrasEl = document.getElementById('searchMuestras');
+    const btnClearSearch = document.getElementById('btnClearSearch');
+    const btnClearSearchMuestras = document.getElementById('btnClearSearchMuestras');
+    const summaryRow = document.getElementById('summaryRow');
+    const fileXLSX = document.getElementById('fileXLSX');
+    const pageMonth = document.getElementById('pageMonth');
+    const pageAnnual = document.getElementById('pageAnnual');
+    const pageMuestras = document.getElementById('pageMuestras');
+    const btnResumenAnual = document.getElementById('btnResumenAnual');
+    const btnControlMuestras = document.getElementById('btnControlMuestras');
+    const hamburger = document.getElementById('hamburger');
+
+    let monthChart = null, annualBar = null; 
+
+    function save(){ 
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); 
+      localStorage.setItem(STORAGE_KEY_SAMPLES, JSON.stringify(muestrasData)); 
+      showToast('✅ Datos guardados', 'success'); 
+    }
+    function showToast(msg, type='success'){ 
+      const t = document.createElement('div'); 
+      t.className = `toast ${type}`; 
+      t.textContent = msg; 
+      document.body.appendChild(t); 
+      setTimeout(()=>t.remove(), 3000); 
+    }
+    function formatDate(d){ 
+      if(!d) return ''; 
+      try{ 
+        const dt = new Date(d); 
+        if(isNaN(dt)) return d; 
+        return dt.toISOString().slice(0,10); 
+      }catch(e){ return d; } 
+    }
+
+    function renderSidebar(){ 
+      sidebarMonths.innerHTML=''; 
+      MONTHS.forEach((m,i)=>{ 
+        const b = document.createElement('button'); 
+        b.className='month-btn'+(i===activeMonth?' active':''); 
+        b.innerHTML = `<svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10z"/></svg><span style="flex:1">${m}</span>`; 
+        b.onclick = ()=>{ 
+          activeMonth = i; 
+          showMonthPage(); 
+          renderAll(); 
+          if(window.innerWidth<=768) hideSidebar(); 
+        }; 
+        sidebarMonths.appendChild(b); 
+      }); 
+      if(pageAnnual.style.display==='block'){
+        btnResumenAnual.classList.add('active');
+        btnControlMuestras.classList.remove('active');
+      } else if (pageMuestras.style.display==='block'){
+        btnResumenAnual.classList.remove('active');
+        btnControlMuestras.classList.add('active');
+      } else {
+        btnResumenAnual.classList.remove('active');
+        btnControlMuestras.classList.remove('active');
+      }
+    }
+
+    function hideSidebar(){ sidebar.classList.add('hidden'); }
+    function showSidebar(){ sidebar.classList.remove('hidden'); }
+    hamburger.addEventListener('click', ()=>{ sidebar.classList.contains('hidden') ? showSidebar() : hideSidebar(); });
+
+    function showMonthPage(){ 
+        pageMonth.style.display='block'; 
+        pageAnnual.style.display='none'; 
+        pageMuestras.style.display='none';
+        renderSidebar();
+    }
+    function showAnnualPage(){ 
+        pageMonth.style.display='none'; 
+        pageAnnual.style.display='block'; 
+        pageMuestras.style.display='none';
+        renderSidebar();
+    }
+    function showMuestrasPage(){ 
+        pageMonth.style.display='none'; 
+        pageAnnual.style.display='none'; 
+        pageMuestras.style.display='block';
+        renderSidebar();
+        renderMuestrasTable();
+    }
+
+    btnResumenAnual.addEventListener('click', ()=>{ showAnnualPage(); renderAnnualBar(); if(window.innerWidth<=768) hideSidebar(); });
+    btnControlMuestras.addEventListener('click', ()=>{ showMuestrasPage(); if(window.innerWidth<=768) hideSidebar(); });
+
+    function renderTable(){ 
+      tbody.innerHTML=''; 
+      const rows = data[activeMonth] || []; 
+      const filter = (searchEl.value||'').toLowerCase(); 
+      rows.forEach((r,idx)=>{ 
+        const visible = !filter || [r.fecha,r.material,r.destino].join(' ').toLowerCase().includes(filter); 
+        if(!visible) return; 
+        const tr = document.createElement('tr'); 
+        tr.innerHTML = `
+          <td>${formatDate(r.fecha)}</td>
+          <td><span style="padding:4px 8px;background:rgba(251,191,36,0.15);border-radius:6px;font-size:11px;font-weight:600">${r.material}</span></td>
+          <td>${r.volquetadas||0}</td>
+          <td style="font-weight:600;color:var(--gold)">${(parseFloat(r.peso)||0).toFixed(2)}</td>
+          <td class='left'>${r.destino||'-'}</td>
+          <td class='actions'>
+            <button onclick='editRow(${idx})'>✏️ Editar</button>
+            <button onclick='deleteRow(${idx})'>🗑️ Eliminar</button>
+          </td>
+        `; 
+        tbody.appendChild(tr); 
+      }); 
+      renderSummaryCards(); 
+      renderMonthChart(); 
+    }
+
+    // LÓGICA DE MUESTRAS
+    function renderMuestrasTable(){ 
+        tbodyMuestras.innerHTML=''; 
+        const filter = (searchMuestrasEl.value||'').toLowerCase(); 
+        muestrasData.forEach((r,idx)=>{ 
+            const visible = !filter || [r.fecha,r.lugar,r.observaciones,r.tenor].join(' ').toLowerCase().includes(filter); 
+            if(!visible) return; 
+            const tr = document.createElement('tr'); 
+            tr.innerHTML = `
+                <td>${formatDate(r.fecha)}</td>
+                <td>${r.cantidad||0}</td>
+                <td class='left'>${r.lugar||'-'}</td>
+                <td style="font-weight:600;color:var(--success)">${r.tenor||'-'}</td>
+                <td class='left'>${r.observaciones||'-'}</td>
+                <td class='actions'>
+                    <button onclick='editMuestraRow(${idx})'>✏️ Editar</button>
+                    <button onclick='deleteMuestraRow(${idx})'>🗑️ Eliminar</button>
+                </td>
+            `; 
+            tbodyMuestras.appendChild(tr); 
+        }); 
+    }
+
+    window.editMuestraRow = function(idx){ 
+        const r = muestrasData[idx]; 
+        // Se asegura que todos los IDs existan antes de intentar asignarles un valor
+        document.getElementById('muestra_fecha').value = r.fecha || ''; 
+        document.getElementById('muestra_cantidad').value = r.cantidad || ''; 
+        document.getElementById('muestra_lugar').value = r.lugar || ''; 
+        document.getElementById('muestra_tenor').value = r.tenor || ''; 
+        document.getElementById('muestra_observaciones').value = r.observaciones || '';
+        document.getElementById('btnSaveMuestra').innerHTML = '✅ Actualizar Muestra'; 
+        muestrasData.splice(idx,1); 
+        save(); 
+        renderMuestrasTable(); 
+    };
+    
+    window.deleteMuestraRow = function(idx){ 
+        if(confirm('¿Eliminar este registro de muestra?')){ 
+            muestrasData.splice(idx,1); 
+            save(); 
+            renderMuestrasTable(); 
+            showToast('🗑️ Muestra eliminada', 'success'); 
+        } 
+    };
+
+    document.getElementById('muestrasForm').addEventListener('submit', (e)=>{ 
+        e.preventDefault(); 
+        const f = document.getElementById('muestra_fecha').value; 
+        const cant = parseInt(document.getElementById('muestra_cantidad').value)||0; 
+        const lug = document.getElementById('muestra_lugar').value||''; 
+        const ten = document.getElementById('muestra_tenor').value||''; 
+        const obs = document.getElementById('muestra_observaciones').value||'';
+        
+        if(!f || cant<=0 || !ten.trim()){ 
+            showToast('⚠️ Complete todos los campos obligatorios (Fecha, Cantidad, Tenor)', 'error'); 
+            return; 
+        }
+        
+        muestrasData.push({fecha:f, cantidad:cant, lugar:lug, tenor:ten, observaciones:obs});
+        save(); 
+        renderMuestrasTable(); 
+        clearMuestrasForm(); 
+    });
+
+    function clearMuestrasForm(){ 
+        document.getElementById('muestrasForm').reset(); 
+        document.getElementById('btnSaveMuestra').innerHTML = '💾 Guardar Muestra'; 
+    }
+
+    searchMuestrasEl.addEventListener('input', ()=> renderMuestrasTable()); 
+    btnClearSearchMuestras.addEventListener('click', ()=>{ searchMuestrasEl.value=''; renderMuestrasTable(); });
+    // FIN LÓGICA DE MUESTRAS
+
+    window.editRow = function(idx){ 
+      const r = data[activeMonth][idx]; 
+      document.getElementById('fecha').value = r.fecha || ''; 
+      document.getElementById('material').value = r.material || 'SELECTIVO'; 
+      document.getElementById('volquetadas').value = r.volquetadas || ''; 
+      document.getElementById('peso').value = r.peso || ''; 
+      document.getElementById('destino').value = r.destino || ''; 
+      document.getElementById('btnSave').innerHTML = '✅ Actualizar'; 
+      data[activeMonth].splice(idx,1); 
+      save(); 
+      renderTable(); 
+    };
+    
+    window.deleteRow = function(idx){ 
+      if(confirm('¿Eliminar este registro?')){ 
+        data[activeMonth].splice(idx,1); 
+        save(); 
+        renderTable(); 
+        renderAnnualBar(); 
+        showToast('🗑️ Registro eliminado', 'success'); 
+      } 
+    };
+
+    document.getElementById('entryForm').addEventListener('submit', (e)=>{ 
+      e.preventDefault(); 
+      const f = document.getElementById('fecha').value; 
+      const mat = document.getElementById('material').value; 
+      const vol = parseInt(document.getElementById('volquetadas').value)||0; 
+      const peso = parseFloat(document.getElementById('peso').value)||0; 
+      const dest = document.getElementById('destino').value||''; 
+      
+      if(!f || peso<=0){ 
+        showToast('⚠️ Complete los campos obligatorios', 'error'); 
+        return; 
+      }
+      
+      if(f){ 
+        const monthOfDate = new Date(f).getMonth(); 
+        if(monthOfDate !== activeMonth){ 
+          if(confirm(`La fecha pertenece a ${MONTHS[monthOfDate]}. ¿Guardar allí?`)){ 
+            data[monthOfDate].push({fecha:f,material:mat,volquetadas:vol,peso,destino:dest}); 
+            save(); 
+            renderAll(); 
+            clearForm(); 
+            return; 
+          } 
+        } 
+      } 
+      
+      data[activeMonth].push({fecha:f,material:mat,volquetadas:vol,peso,destino:dest}); 
+      save(); 
+      renderAll(); 
+      clearForm(); 
+    });
+
+    function clearForm(){ 
+      document.getElementById('entryForm').reset(); 
+      document.getElementById('btnSave').innerHTML = '💾 Guardar'; 
+    }
+
+    function renderSummaryCards(){ 
+      const rows = data[activeMonth] || []; 
+      const totals = { 'BAJO TENOR':0, 'MEDIO TENOR':0, 'SELECTIVO':0 }; 
+      rows.forEach(r=>{ 
+        const m = (r.material||'').toUpperCase(); 
+        if(totals[m] !== undefined) totals[m] += parseFloat(r.peso)||0; 
+      }); 
+      const totalGeneral = Object.values(totals).reduce((a,b)=>a+b,0); 
+      summaryRow.innerHTML = `
+        <div class="card-s">
+          <div class="label">🔵 Bajo Tenor</div>
+          <div class="value">${totals['BAJO TENOR'].toFixed(2)} Ton</div>
+        </div>
+        <div class="card-s">
+          <div class="label">🟡 Medio Tenor</div>
+          <div class="value">${totals['MEDIO TENOR'].toFixed(2)} Ton</div>
+        </div>
+        <div class="card-s">
+          <div class="label">🟢 Selectivo</div>
+          <div class="value">${totals['SELECTIVO'].toFixed(2)} Ton</div>
+        </div>
+        <div class="card-s">
+          <div class="label">⚡ Total General</div>
+          <div class="value">${totalGeneral.toFixed(2)} Ton</div>
+        </div>
+      `; 
+    }
+
+    function renderMonthChart(){ 
+      const rows = data[activeMonth]||[]; 
+      const days = {}; 
+      rows.forEach(r=>{ 
+        const d = r.fecha ? new Date(r.fecha).getDate() : null; 
+        if(!d) return; 
+        const mat = (r.material||'').toUpperCase(); 
+        if(!days[d]) days[d] = {'BAJO TENOR':0,'MEDIO TENOR':0,'SELECTIVO':0}; 
+        days[d][mat] += parseFloat(r.peso)||0; 
+      }); 
+      const maxDay = Math.max(...(rows.map(r=> r.fecha? new Date(r.fecha).getDate():0)), 28); 
+      const labels = Array.from({length:maxDay}, (_,i)=> String(i+1)); 
+      const dataB = labels.map(l=> days[l]? days[l]['BAJO TENOR'] : 0); 
+      const dataM = labels.map(l=> days[l]? days[l]['MEDIO TENOR'] : 0); 
+      const dataS = labels.map(l=> days[l]? days[l]['SELECTIVO'] : 0); 
+      
+      if(monthChart) monthChart.destroy(); 
+      monthChart = new Chart(document.getElementById('monthChart').getContext('2d'),{ 
+        type:'line', 
+        data:{ 
+          labels, 
+          datasets:[ 
+            {label:'Bajo Tenor', data: dataB, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', tension:0.4, pointRadius:3, borderWidth:2, fill:true}, 
+            {label:'Medio Tenor', data: dataM, borderColor: '#fbbf24', backgroundColor: 'rgba(251,191,36,0.1)', tension:0.4, pointRadius:3, borderWidth:2, fill:true}, 
+            {label:'Selectivo', data: dataS, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', tension:0.4, pointRadius:3, borderWidth:2, fill:true} 
+          ] 
+        }, 
+        options:{ 
+          plugins:{ 
+            legend:{labels:{color:'#f8fafc', font:{size:12}}}, 
+            tooltip:{
+              backgroundColor:'rgba(15,22,33,0.95)',
+              titleColor:'#fbbf24',
+              bodyColor:'#f8fafc',
+              borderColor:'rgba(251,191,36,0.3)',
+              borderWidth:1,
+              padding:12,
+              displayColors:true
+            } 
+          }, 
+          scales:{ 
+            x:{ 
+              ticks:{color:'#94a3b8', font:{size:11}}, 
+              grid:{color:'rgba(255,255,255,0.05)'} 
+            }, 
+            y:{ 
+              ticks:{color:'#94a3b8', font:{size:11}}, 
+              grid:{color:'rgba(255,255,255,0.05)'} 
+            } 
+          }, 
+          responsive:true, 
+          maintainAspectRatio:false,
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          }
+        } 
+      }); 
+    }
+
+    function renderAnnualBar(){ 
+      const totals = MONTHS.map((m,i)=> data[i].reduce((s,r)=> s + (parseFloat(r.peso)||0),0)); 
+      const totalYear = totals.reduce((a,b)=>a+b,0); 
+      document.getElementById('totalYearText').textContent = `💰 Total anual: ${totalYear.toFixed(2)} Toneladas`; 
+      
+      if(annualBar) annualBar.destroy(); 
+      annualBar = new Chart(document.getElementById('annualBar').getContext('2d'),{ 
+        type:'bar', 
+        data:{ 
+          labels:MONTHS, 
+          datasets:[{
+            label:'Toneladas', 
+            data:totals, 
+            backgroundColor: totals.map((v,i)=> `rgba(251,191,36,${0.5 + (v/Math.max(...totals))*0.5})`), 
+            borderColor:'rgba(251,191,36,1)', 
+            borderWidth:2,
+            borderRadius:8
+          }] 
+        }, 
+        options:{ 
+          plugins:{ 
+            legend:{display:false},
+            tooltip:{
+              backgroundColor:'rgba(15,22,33,0.95)',
+              titleColor:'#fbbf24',
+              bodyColor:'#f8fafc',
+              borderColor:'rgba(251,191,36,0.3)',
+              borderWidth:1,
+              padding:12,
+              callbacks: {
+                label: function(context) {
+                  return `Total: ${context.parsed.y.toFixed(2)} Ton`;
+                }
+              }
+            }
+          }, 
+          scales:{ 
+            x:{ 
+              ticks:{color:'#f8fafc', font:{size:12}}, 
+              grid:{display:false} 
+            }, 
+            y:{ 
+              ticks:{color:'#f8fafc', font:{size:12}}, 
+              grid:{color:'rgba(255,255,255,0.1)'} 
+            } 
+          }, 
+          responsive:true, 
+          maintainAspectRatio:false 
+        } 
+      }); 
+    }
+
+    document.getElementById('btnExportAll').addEventListener('click', ()=>{ 
+      const wb = XLSX.utils.book_new(); 
+      
+      // 1. Hoja por mes (Carga)
+      MONTHS.forEach((m,i)=>{ 
+        const aoa = [['FECHA','MATERIAL','VOLQUETADAS','PESO TOTAL (Ton)','DESTINO / CLIENTE']]; 
+        (data[i]||[]).forEach(r=> aoa.push([r.fecha,r.material,r.volquetadas,r.peso,r.destino])); 
+        const ws = XLSX.utils.aoa_to_sheet(aoa); 
+        XLSX.utils.book_append_sheet(wb, ws, m); 
+      }); 
+      
+      // 2. Hoja de Resumen Anual (Carga)
+      const sum = [['MES','MATERIAL','TOTAL VOLQUETADAS','TOTAL PESO (Ton)']]; 
+      MONTHS.forEach((m,i)=>{ 
+        ['BAJO TENOR','MEDIO TENOR','SELECTIVO'].forEach(mat=>{ 
+          const rows = (data[i]||[]).filter(r=> r.material===mat); 
+          const vol = rows.reduce((s,r)=> s + (parseInt(r.volquetadas)||0),0); 
+          const peso = rows.reduce((s,r)=> s + (parseFloat(r.peso)||0),0); 
+          sum.push([m,mat,vol,Math.round(peso*100)/100]); 
+        }); 
+      }); 
+      const wsSum = XLSX.utils.aoa_to_sheet(sum); 
+      XLSX.utils.book_append_sheet(wb, wsSum, 'Resumen Anual'); 
+      
+      // 3. Hoja de Control de Muestras 
+      const muestrasAoA = [['FECHA','CANTIDAD','LUGAR DE EXTRACCIÓN','TENOR OBTENIDO','OBSERVACIONES']]; 
+      muestrasData.forEach(r=> muestrasAoA.push([r.fecha,r.cantidad,r.lugar,r.tenor,r.observaciones])); 
+      const wsMuestras = XLSX.utils.aoa_to_sheet(muestrasAoA); 
+      XLSX.utils.book_append_sheet(wb, wsMuestras, 'Control de Muestras'); 
+      
+      XLSX.writeFile(wb, `CONTROL_CARGA_${new Date().toISOString().slice(0,10)}.xlsx`); 
+      showToast('📥 Archivo exportado exitosamente', 'success'); 
+    });
+
+    document.getElementById('btnImportXLSX').addEventListener('click', ()=> fileXLSX.click());
+    fileXLSX.addEventListener('change', async (e)=>{ 
+      const f = e.target.files[0]; 
+      if(!f) return; 
+      try{ 
+        const arr = await f.arrayBuffer(); 
+        const wb = XLSX.read(arr,{type:'array'}); 
+        const newData = Array.from({length:12},()=>[]); 
+        let newMuestrasData = [];
+        const sheets = wb.SheetNames; 
+        
+        sheets.forEach((sheetName, idx)=>{ 
+          const s = wb.Sheets[sheetName]; 
+          const aoa = XLSX.utils.sheet_to_json(s,{header:1,defval:''}); 
+          const headers = (aoa[0]||[]).map(h=> String(h||'').toLowerCase()); 
+          const find = (names)=>{ 
+            for(const n of names){ 
+              const i = headers.indexOf(n); 
+              if(i>=0) return i 
+            } 
+            return -1 
+          }; 
+          
+          if(sheetName.toLowerCase().includes('muestras')){
+            const cFecha = find(['fecha','date']); 
+            const cCant = find(['cantidad','no_muestras']); 
+            const cLugar = find(['lugar','extraccion','destino']); 
+            const cTenor = find(['tenor','tenor obtenido (%)','tenor obtenido']); 
+            const cObs = find(['observaciones','obs','notas']); 
+            
+
+            if(cFecha>=0 && cCant>=0 && cLugar>=0 && cTenor>=0){
+                for(let r=1;r<aoa.length;r++){ 
+                    const row = aoa[r]; 
+                    if(!row) continue; 
+                    const fecha = cFecha>=0 ? formatDateXLSX(row[cFecha]) : ''; 
+                    const cantidad = cCant>=0 ? Number(row[cCant]) : 0; 
+                    const lugar = cLugar>=0 ? row[cLugar] : ''; 
+                    const tenor = cTenor>=0 ? String(row[cTenor]) : ''; 
+                    const obs = cObs>=0 ? String(row[cObs]) : ''; 
+                    newMuestrasData.push({fecha,cantidad,lugar,tenor,observaciones:obs}); 
+                } 
+            }
+            return; 
+          }
+          
+          const cFecha = find(['fecha','date']); 
+          const cMat = find(['material']); 
+          const cVol = find(['volquetadas','volq','volquetas','cantidad']); 
+          const cPeso = find(['peso','peso total (ton)','toneladas']); 
+          const cDest = find(['destino','cliente']); 
+          
+          let target = MONTHS.findIndex(m=> m.toLowerCase()===sheetName.toLowerCase()); 
+          if(target===-1) target = idx<12? idx : -1; 
+          
+          if(target>=0 && target<12){ 
+            for(let r=1;r<aoa.length;r++){ 
+              const row = aoa[r]; 
+              if(!row) continue; 
+              const fecha = cFecha>=0 ? formatDateXLSX(row[cFecha]) : ''; 
+              const material = cMat>=0 ? String(row[cMat]).toUpperCase() : 'SELECTIVO'; 
+              const vol = cVol>=0 ? Number(row[cVol]) : 0; 
+              const peso = cPeso>=0 ? Number(row[cPeso]) : 0; 
+              const destino = cDest>=0 ? row[cDest] : ''; 
+              newData[target].push({fecha,material,volquetadas:vol,peso,destino}); 
+            } 
+          } 
+        }); 
+        
+        if(confirm('¿Reemplazar todos los datos actuales con el archivo importado?')){ 
+          data = newData; 
+          muestrasData = newMuestrasData; 
+          save(); 
+          renderAll(); 
+          showToast('✅ Importación completada exitosamente', 'success'); 
+        } 
+      }catch(err){ 
+        showToast('❌ Error al importar: '+err.message, 'error'); 
+      } 
+      e.target.value=''; 
+    });
+
+    function formatDateXLSX(v){ 
+      if(!v) return ''; 
+      if(typeof v==='number'){ 
+        const d = XLSX.SSF.parse_date_code(v); 
+        if(d) return new Date(Date.UTC(d.y,d.m-1,d.d)).toISOString().slice(0,10); 
+      } 
+      try{ 
+        const dt = new Date(v); 
+        if(!isNaN(dt)) return dt.toISOString().slice(0,10); 
+      }catch(e){} 
+      return String(v); 
+    }
+
+    searchEl.addEventListener('input', ()=> renderTable()); 
+    btnClearSearch.addEventListener('click', ()=>{ searchEl.value=''; renderTable(); });
+
+    function renderAll(){ 
+      renderSidebar(); 
+      renderTable(); 
+      renderMonthChart(); 
+      renderAnnualBar(); 
+      renderMuestrasTable(); 
+    }
+
+    renderAll(); 
+    showMonthPage();
+
+    window.addEventListener('resize', ()=>{ 
+      if(window.innerWidth>768) showSidebar(); 
+    });
+
+    setInterval(()=>{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(STORAGE_KEY_SAMPLES, JSON.stringify(muestrasData));
+    }, 30000);
+    
+    window.addEventListener('beforeunload', ()=>{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(STORAGE_KEY_SAMPLES, JSON.stringify(muestrasData));
+    });
+
+    // LÓGICA DE LA CALCULADORA
+    const calcDisplay = document.getElementById('calcDisplay');
+    const calculatorModal = document.getElementById('calculatorModal');
+    let currentInput = '0';
+    let operator = null;
+    let prevInput = '0';
+    let resultCalculated = false;
+
+    function updateDisplay() {
+      calcDisplay.value = currentInput;
+    }
+
+    window.appendCalcNumber = function(num) {
+      if (resultCalculated) {
+        currentInput = num;
+        resultCalculated = false;
+      } else {
+        if (currentInput === '0' && num !== '.') {
+          currentInput = num;
+        } else if (num === '.' && currentInput.includes('.')) {
+          // No hacer nada si ya hay un punto
+        } else {
+          currentInput += num;
+        }
+      }
+      updateDisplay();
+    };
+
+    window.appendCalcOperator = function(op) {
+      if (operator && !resultCalculated) {
+        calculateResult();
+      }
+      prevInput = currentInput;
+      operator = op;
+      currentInput = '0';
+      resultCalculated = false;
+      updateDisplay(); // Mostrar el 0 o el resultado
+    };
+
+    window.calculateResult = function() {
+      if (!operator || resultCalculated) return;
+
+      let res;
+      const num1 = parseFloat(prevInput);
+      const num2 = parseFloat(currentInput);
+
+      switch (operator) {
+        case '+': res = num1 + num2; break;
+        case '-': res = num1 - num2; break;
+        case '*': res = num1 * num2; break;
+        case '/': 
+          if (num2 === 0) {
+            showToast('❌ División por cero', 'error');
+            res = 0; // O manejar como error
+          } else {
+            res = num1 / num2;
+          }
+          break;
+        default: return;
+      }
+      currentInput = res.toString();
+      operator = null;
+      prevInput = '0';
+      resultCalculated = true;
+      updateDisplay();
+    };
+
+    window.clearCalc = function() {
+      currentInput = '0';
+      operator = null;
+      prevInput = '0';
+      resultCalculated = false;
+      updateDisplay();
+    };
+
+    window.showCalculator = function() {
+      calculatorModal.classList.add('visible');
+      clearCalc();
+    };
+
+    window.hideCalculator = function() {
+      calculatorModal.classList.remove('visible');
+    };
+
+    document.getElementById('btnShowCalculator').addEventListener('click', showCalculator);
+
+    // Cerrar modal al hacer clic fuera
+    calculatorModal.addEventListener('click', (e) => {
+      if (e.target === calculatorModal) {
+        hideCalculator();
+      }
+    });
+
+  </script>
+</body>
+</html>
