@@ -14,15 +14,12 @@
     }
     *{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Inter',Segoe UI,Arial,sans-serif;background:linear-gradient(135deg,var(--bg) 0%,#020408 100%);color:var(--white);overflow:hidden}
-    
     /* Scrollbar futurista */
     ::-webkit-scrollbar{width:8px}
     ::-webkit-scrollbar-track{background:#111a2c}
     ::-webkit-scrollbar-thumb{background:var(--accent);border-radius:4px}
     ::-webkit-scrollbar-thumb:hover{background:#4a90f2}
-
     .app{display:flex;height:100vh;position:relative}
-
     /* --- SIDEBAR (Menú Meses) --- */
     .sidebar{
       width:var(--sidebar-w);background:var(--panel);padding:20px 0;
@@ -46,7 +43,6 @@
       background:rgba(59,130,246,0.15);color:var(--accent);
       font-weight:600;border-left-color:var(--accent);
     }
-
     /* --- MAIN CONTENT --- */
     .content{
       flex-grow:1;padding:20px;overflow-y:auto;
@@ -54,14 +50,12 @@
       transition:padding-left 0.3s ease;
     }
     .content.full-width{padding-left:20px;}
-
     .header-main{
         display:flex;justify-content:space-between;align-items:center;
         margin-bottom:20px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.1);
     }
     .header-main h1{color:var(--accent);font-size:1.8rem;display:flex;align-items:center;gap:10px;}
     .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:20px;}
-
     /* --- FORMULARIOS --- */
     form{
       background:var(--panel);padding:20px;border-radius:12px;
@@ -69,7 +63,6 @@
       border:1px solid rgba(255,255,255,0.05);
     }
     .form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;}
-    
     label{display:block;margin-bottom:5px;color:var(--muted);font-size:0.85rem;}
     input[type="text"], input[type="number"], input[type="date"], select, .search-input{
       width:100%;padding:10px;border-radius:6px;border:1px solid rgba(255,255,255,0.1);
@@ -81,14 +74,12 @@
       box-shadow:0 0 5px rgba(59,130,246,0.5);
     }
     .form-actions{grid-column:span 4;display:flex;justify-content:flex-end;gap:10px;margin-top:10px;}
-    
     /* --- TABLAS --- */
     table{width:100%;border-collapse:collapse;}
     th,td{padding:12px 10px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.9rem;}
     th{background:rgba(255,255,255,0.05);color:var(--gold);font-weight:600;text-transform:uppercase;}
     tr:hover{background:rgba(255,255,255,0.02);}
     td.left{text-align:left;}
-
     /* --- GRÁFICOS --- */
     .chart-container{
         background:var(--panel);padding:20px;border-radius:12px;
@@ -96,7 +87,6 @@
         height:350px;
         border:1px solid rgba(255,255,255,0.05);
     }
-
     /* --- RESUMEN DE DATOS (KPI) --- */
     .summary-grid, .summary-row{
       display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:20px;
@@ -108,7 +98,6 @@
     }
     .card-s .label{color:var(--muted);font-size:0.8rem;text-transform:uppercase;}
     .card-s .value{font-size:1.6rem;font-weight:700;color:var(--white);margin-top:5px;}
-
     /* --- BOTONES GENERALES --- */
     .btn{
       padding:10px 18px;border:none;border-radius:8px;
@@ -125,7 +114,6 @@
       padding:8px 12px;
     }
     .ghost:hover{background:rgba(255,255,255,0.1);}
-    
     /* --- Utilerías --- */
     .hidden{display:none!important;}
     .actions button{
@@ -136,14 +124,12 @@
     .actions button:hover{background:rgba(59,130,246,0.2);}
     .actions button.danger{background:rgba(239,68,68,0.1);color:var(--danger);}
     .actions button.danger:hover{background:rgba(239,68,68,0.2);}
-
     /* --- MOBILE & RESPONSIVE --- */
     @media (max-width: 1200px) {
         .form-grid{grid-template-columns:repeat(2,1fr);}
         .form-actions{grid-column:span 2;}
         .stats-grid, .summary-grid{grid-template-columns:repeat(2,1fr);}
     }
-
     @media (max-width: 768px) {
         .sidebar{position:fixed;height:100vh;z-index:1000;top:0;left:0;}
         .sidebar.hidden{transform:translateX(-100%);}
@@ -154,7 +140,6 @@
         .stats-grid, .summary-grid{grid-template-columns:1fr;}
         .toggle-btn{display:block;}
     }
-
     /* --- TOAST / NOTIFICACIONES --- */
     .toast-container{position:fixed;bottom:20px;right:20px;z-index:5000;display:flex;flex-direction:column;gap:10px;}
     .toast{
@@ -165,7 +150,6 @@
     .toast.success{border-left-color:var(--success);}
     .toast.error{border-left-color:var(--danger);}
     @keyframes slideIn{from{opacity:0;transform:translateX(100%)}to{opacity:1;transform:translateX(0)}}
-    
     /* --- MODAL CALCULADORA --- */
     .modal-calc{
       position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);
@@ -193,7 +177,6 @@
     .calc-buttons button.operator:hover{background:#4a90f2;}
     .calc-buttons button.equal{background:var(--gold);color:var(--bg);grid-column:span 2;}
     .calc-buttons button.equal:hover{background:#eac45f;}
-
     /* NUEVO: Estilo para botones de periodo */
     .period-btn.active {
         background: linear-gradient(135deg, var(--accent), #4a90f2); 
@@ -211,13 +194,11 @@
 
 <body>
   <div class="app">
-
     <div id="sidebar" class="sidebar">
       <h2>📅 Meses de Registro</h2>
       <ul id="sidebarMonths" class="month-list">
         </ul>
     </div>
-
     <div id="content" class="content full-width">
       <div class="header-main">
         <h1 id="monthTitle"></h1>
@@ -228,7 +209,6 @@
             <button class="secondary btn toggle-btn hidden" onclick="toggleSidebar()">☰</button>
         </div>
       </div>
-      
       <div style="margin-bottom: 20px; padding: 10px 15px; background: var(--card); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
           <h4 style="color: var(--gold); margin: 0; font-size: 1rem;">Gestión de Datos Portátiles</h4>
           <div style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -237,8 +217,6 @@
               <button class="secondary btn" onclick="document.getElementById('uploadDataFile').click()">⬆️ Cargar Archivo de Datos</button>
           </div>
       </div>
-
-
       <form id="dataForm">
         <h3>➕ Ingreso de Carga - <span id="modeTitle">NUEVO REGISTRO</span></h3>
         <input type="hidden" id="editIndex" value="-1">
@@ -275,7 +253,6 @@
           <button type="submit" class="primary btn" id="btnSubmit">💾 Guardar Registro</button>
         </div>
       </form>
-
       <div id="periodSelection" style="margin-top: 20px; padding: 16px; background: rgba(59,130,246,0.05); border-radius: 10px; border: 1px solid rgba(59,130,246,0.1);">
         <h4 style="color: var(--gold); margin-bottom: 15px; font-size: 16px;">🔍 Vista Detallada por Periodo</h4>
         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -284,11 +261,9 @@
           <button class="ghost period-btn" data-period="2">P2 (Días 11 - 20)</button>
           <button class="ghost period-btn" data-period="3">P3 (Días 21 - 31)</button>
         </div>
-        
         <div id="periodSummaryRow" class="summary-row" style="margin-top: 15px;">
           </div>
       </div>
-
       <div style="overflow:auto">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;margin-top:20px;">
             <h2>Historial de Registros</h2>
@@ -304,15 +279,12 @@
             </tbody>
         </table>
       </div>
-
       <h2 style="margin-top: 20px; color: var(--success);">Resumen de Cálculos del Mes</h2>
       <div id="summaryRow" class="summary-grid">
         </div>
-      
       <div class="chart-container" style="margin-top:20px;">
           <canvas id="loadChart"></canvas>
       </div>
-      
       <footer style="text-align:center;padding:20px 0;font-size:0.8rem;color:var(--muted);margin-top:20px;border-top:1px solid rgba(255,255,255,0.05);">
         Sistema de Control de Carga | Desarrollado por Julian Fonnegra
       </footer>
@@ -329,29 +301,24 @@
         <button onclick="window.appendValue('backspace')">←</button>
         <button onclick="window.appendValue('.')">.</button>
         <button onclick="window.setOperator('/')" class="operator">÷</button>
-        
         <button onclick="window.appendValue('7')">7</button>
         <button onclick="window.appendValue('8')">8</button>
         <button onclick="window.appendValue('9')">9</button>
         <button onclick="window.setOperator('*')" class="operator">×</button>
-        
         <button onclick="window.appendValue('4')">4</button>
         <button onclick="window.appendValue('5')">5</button>
         <button onclick="window.appendValue('6')">6</button>
         <button onclick="window.setOperator('-')" class="operator">−</button>
-        
         <button onclick="window.appendValue('1')">1</button>
         <button onclick="window.appendValue('2')">2</button>
         <button onclick="window.appendValue('3')">3</button>
         <button onclick="window.setOperator('+')" class="operator">+</button>
-        
         <button onclick="window.hideCalculator()" class="secondary">Cerrar</button>
         <button onclick="window.appendValue('0')">0</button>
         <button onclick="window.calculateResult()" class="equal">=</button>
       </div>
     </div>
   </div>
-
 <script>
   // ====================================================================
   // === VARIABLES GLOBALES Y UTILIDADES ===
@@ -468,11 +435,9 @@
 
   function filterByPeriod(rows, period) {
     if (period === 0) return rows; // Mes completo
-    
     // Define los días de inicio y fin para los periodos P1, P2, P3
     const startDay = period === 1 ? 1 : (period === 2 ? 11 : 21);
     const endDay = period === 1 ? 10 : (period === 2 ? 20 : 31);
-    
     return rows.filter(r => {
         const day = r.fecha ? new Date(r.fecha).getDate() : null;
         return day >= startDay && day <= endDay;
@@ -489,16 +454,13 @@
   function renderSummary(totals, title, elementId, styleType) {
       const element = document.getElementById(elementId);
       if (!element) return;
-
       let pesoStyle = '';
       let volqStyle = '';
-      
       // Aplicar estilo de color Accent (Azul) para el resumen de periodo
       if (styleType === 'period') {
           pesoStyle = 'style="border-left-color:var(--accent);"';
           volqStyle = 'style="border-left-color:var(--accent);"';
       }
-
       let html = `
           <div class="card-s" ${pesoStyle}>
               <div class="label">${title} - PESO TOTAL (TON)</div>
@@ -509,7 +471,6 @@
               <div class="value">${totals.totalVolquetadas}</div>
           </div>
       `;
-
       // Solo la sección de resumen principal (debajo de la tabla) mostrará el promedio
       if (elementId === 'summaryRow') {
           html += `
